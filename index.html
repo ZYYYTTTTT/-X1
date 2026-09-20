@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深巡 X1 · DeepScout X1 · 智能水下巡检机器人</title>
+<style>
+  :root{
+    --bg-0:#04080f;
+    --bg-1:#071220;
+    --bg-2:#0a1a2e;
+    --bg-3:#0d2238;
+    --ink-0:#f2f6fa;
+    --ink-1:#c9d4de;
+    --ink-2:#8a97a3;
+    --titanium:#5b6670;
+    --accent:#35c6d8;
+    --accent-soft:#a9e7ee;
+    --line:rgba(138,151,163,.22);
+    --line-soft:rgba(138,151,163,.14);
+    --surface-dark:#0b1626;
+    --paper:#eef2f6;
+    --paper-2:#e4eaef;
+    --ink-on-paper:#0e1a24;
+    --ink-2-on-paper:#4a5964;
+    --cyan-glow:rgba(53,198,216,.32);
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+    --display:"Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans SC",-apple-system,sans-serif;
+    --mono:ui-monospace,"SF Mono","Segoe UI Mono",Menlo,Consolas,monospace;
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:var(--sans);color:var(--ink-0);background:var(--bg-0);
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;line-height:1.5;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--accent);color:#03121a;}
+  img{display:block;max-width:100%;}
+/* ============ 导航 ============ */
+.nav{
+position:fixed;top:0;left:0;right:0;z-index:100;
+display:flex;align-items:center;justify-content:space-between;gap:24px;
+height:68px;padding:0 44px;
+transition:background .35s var(--ease),border-color .35s var(--ease),backdrop-filter .35s var(--ease);
+border-bottom:1px solid transparent;
+}
+.nav.scrolled{background:rgba(4,8,15,.72);backdrop-filter:blur(14px) saturate(140%);border-bottom:1px solid var(--line-soft);}
+.nav .brand{display:flex;align-items:baseline;gap:10px;text-decoration:none;color:var(--ink-0);}
+.nav .brand .cn{font-size:19px;font-weight:700;letter-spacing:.02em;}
+.nav .brand .en{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--accent);text-transform:uppercase;}
+.nav .links{display:flex;gap:30px;}
+.nav .links a{
+color:var(--ink-1);text-decoration:none;font-size:14.5px;letter-spacing:.04em;position:relative;padding:4px 0;
+transition:color .2s var(--ease);
+}
+.nav .links a::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:1px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .25s var(--ease);}
+.nav .links a:hover{color:var(--ink-0);}
+.nav .links a:hover::after{transform:scaleX(1);}
+.nav .cta{
+font-size:14px;color:#03121a;background:var(--accent);padding:10px 22px;border-radius:999px;
+text-decoration:none;font-weight:600;letter-spacing:.02em;transition:background .2s var(--ease),transform .2s var(--ease),box-shadow .2s var(--ease);
+}
+.nav .cta:hover{background:var(--accent-soft);transform:translateY(-1px);box-shadow:0 6px 20px var(--cyan-glow);}
+.nav .menu-btn{display:none;background:none;border:none;color:var(--ink-0);width:40px;height:40px;cursor:pointer;font-size:20px;}
+.nav .mobile-links{display:none;}
+/* ============ 通用区块 ============ */
+section{position:relative;width:100%;overflow:hidden;}
+.sec-in{position:relative;z-index:2;width:100%;max-width:1920px;margin:0 auto;padding:0 64px;}
+.kicker{
+display:inline-flex;align-items:center;gap:12px;
+font-family:var(--mono);font-size:13px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);
+margin-bottom:18px;
+}
+.kicker::before{content:"";width:26px;height:1px;background:var(--accent);}
+.kicker.light{color:var(--accent);}
+.kicker.on-paper{color:#0b7f92;}
+.kicker.on-paper::before{background:#0b7f92;}
+h2.h-title{font-family:var(--display);font-size:clamp(40px,4.6vw,66px);line-height:1.12;font-weight:700;letter-spacing:-.015em;}
+.lead{font-size:clamp(16.5px,1.4vw,21px);line-height:1.62;color:var(--ink-1);max-width:40em;margin-top:20px;}
+.lead.on-paper{color:var(--ink-2-on-paper);}
+/* 滚动进场 */
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s var(--ease),transform .8s var(--ease);}
+.reveal.in{opacity:1;transform:none;}
+.rendering .reveal{opacity:1;transform:none;transition:none;}
+.reveal[data-d="1"]{transition-delay:.08s;}
+.reveal[data-d="2"]{transition-delay:.16s;}
+.reveal[data-d="3"]{transition-delay:.26s;}
+/* ============ 第1页 首屏 ============ */
+.hero{position:relative;height:1080px;display:flex;flex-direction:column;align-items:center;text-align:center;background:var(--bg-0);overflow:hidden;}
+.hero .hero-bg{position:absolute;inset:0;
+background:
+radial-gradient(80% 62% at 50% 82%,rgba(53,198,216,.16) 0%,transparent 62%),
+radial-gradient(130% 100% at 50% -12%,var(--bg-2) 0%,var(--bg-0) 66%);}
+.hero .hero-ghost{
+position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:1;
+font-family:var(--display);font-weight:800;line-height:.88;letter-spacing:-.02em;
+font-size:clamp(96px,15vw,268px);white-space:nowrap;pointer-events:none;user-select:none;
+color:rgba(242,246,250,.52);
+}
+.hero .hero-top{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;padding:112px 24px 0;}
+.hero .hero-name{font-size:26px;font-weight:700;letter-spacing:.04em;}
+.hero .hero-name .en{font-family:var(--mono);font-size:13px;font-weight:400;color:var(--accent);margin-left:12px;letter-spacing:.26em;text-transform:uppercase;}
+.hero .hero-product{position:relative;z-index:2;flex:1;display:flex;align-items:flex-end;justify-content:center;width:min(54vw,1040px);perspective:1500px;margin-top:-24px;}
+.hero .hero-product .stage{width:100%;transform-style:preserve-3d;will-change:transform;}
+.hero .hero-product img{
+width:100%;height:auto;display:block;
+mask-image:radial-gradient(80% 80% at 50% 34%,#000 52%,transparent 94%);
+-webkit-mask-image:radial-gradient(80% 80% at 50% 34%,#000 52%,transparent 94%);
+animation:heroFloat 7s ease-in-out infinite;
+}
+@keyframes heroFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-14px);}}
+.hero .hero-bottom{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;padding:0 24px 108px;}
+.hero .hero-bottom h1{font-family:var(--display);font-size:clamp(24px,2.6vw,38px);line-height:1.3;font-weight:600;letter-spacing:.01em;}
+.hero .hero-bottom h1 .glow{background:linear-gradient(120deg,var(--ink-0) 30%,var(--accent-soft));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.hero .hero-sub{font-size:15px;letter-spacing:.32em;color:var(--ink-1);margin-top:14px;}
+.hero .scroll-hint{
+position:absolute;left:50%;bottom:24px;transform:translateX(-50%);z-index:4;
+display:flex;flex-direction:column;align-items:center;gap:10px;
+font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--ink-2);text-transform:uppercase;
+}
+.hero .scroll-hint .line{width:1px;height:42px;background:linear-gradient(180deg,var(--accent),transparent);animation:drip 2.2s var(--ease) infinite;}
+@keyframes drip{0%{transform:scaleY(0);transform-origin:top;}45%{transform:scaleY(1);transform-origin:top;}55%{transform:scaleY(1);transform-origin:bottom;}100%{transform:scaleY(0);transform-origin:bottom;}}
+/* ============ 第2页 定位 ============ */
+.pos{height:840px;background:linear-gradient(180deg,var(--bg-0),var(--bg-2));display:flex;flex-direction:column;justify-content:center;}
+.pos .sec-in{display:flex;flex-direction:column;align-items:center;text-align:center;}
+.pos .txt{max-width:760px;}
+.pos .silhouette{width:min(960px,66%);aspect-ratio:1738/905;margin-top:34px;position:relative;}
+.pos .silhouette img{width:100%;height:100%;object-fit:cover;border-radius:14px;opacity:.9;mask-image:radial-gradient(96% 96% at 50% 50%,#000 58%,transparent 96%);-webkit-mask-image:radial-gradient(96% 96% at 50% 50%,#000 58%,transparent 96%);}
+.pos .pills{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:34px;}
+.pos .pill{
+border:1px solid var(--line);border-radius:999px;padding:10px 26px;font-size:16px;color:var(--ink-0);
+background:rgba(13,34,56,.4);backdrop-filter:blur(4px);letter-spacing:.06em;
+}
+.pos .pill b{color:var(--accent);font-weight:600;margin-right:4px;}
+/* ============ 第3页 水下视觉 ============ */
+.vision{height:900px;position:relative;display:flex;align-items:flex-end;}
+.vision .bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.vision .veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,8,15,.15) 0%,rgba(4,8,15,0) 35%,rgba(4,8,15,.88) 88%);}
+.vision .sec-in{position:relative;z-index:2;padding-bottom:84px;}
+.vision .grid{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;}
+.vision .txt-col{max-width:600px;}
+.vision .core{margin-top:28px;}
+.vision .core .num{font-family:var(--display);font-size:clamp(72px,8vw,112px);line-height:.95;font-weight:700;letter-spacing:-.02em;color:var(--ink-0);}
+.vision .core .num span{font-size:.38em;font-weight:500;color:var(--accent);letter-spacing:.04em;margin-left:12px;}
+.vision .tags{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px;}
+.vision .tag{border:1px solid var(--line);border-radius:999px;background:rgba(4,8,15,.5);backdrop-filter:blur(6px);padding:8px 18px;font-size:14px;color:var(--ink-0);}
+.vision .beam{position:absolute;right:0;bottom:0;z-index:2;width:44%;height:100%;pointer-events:none;
+background:radial-gradient(60% 45% at 70% 60%,var(--cyan-glow) 0%,transparent 62%);}
+/* ============ 第5页 声呐 ============ */
+.sonar{height:940px;background:radial-gradient(120% 110% at 30% 50%,var(--bg-2) 0%,var(--bg-0) 70%);display:flex;align-items:center;}
+.sonar .sec-in{display:flex;align-items:center;gap:56px;padding-top:80px;padding-bottom:80px;}
+.sonar .left{flex:0 0 340px;}
+.sonar .robot{width:340px;height:440px;border-radius:16px;overflow:hidden;position:relative;background:var(--surface-dark);}
+.sonar .robot img{width:100%;height:100%;object-fit:cover;}
+.sonar .robot::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 1px rgba(138,151,163,.16);border-radius:16px;}
+.sonar .right{flex:1;min-width:0;}
+.sonar .num{font-family:var(--display);font-size:clamp(80px,9vw,132px);line-height:.9;font-weight:700;letter-spacing:-.02em;margin-top:24px;}
+.sonar .num .unit{font-size:.34em;font-weight:500;color:var(--accent);margin-left:10px;}
+.sonar .num-label{font-family:var(--mono);font-size:13px;letter-spacing:.12em;color:var(--ink-2);margin-top:12px;text-transform:uppercase;}
+.sonar .fan{width:100%;max-width:720px;margin-top:30px;}
+.sonar .fan svg{width:100%;height:auto;display:block;}
+.sonar .fan .arc{fill:rgba(53,198,216,.05);stroke:var(--accent);stroke-width:1.3;}
+.sonar .fan .ring{fill:none;stroke:rgba(53,198,216,.3);stroke-width:1;stroke-dasharray:4 6;}
+.sonar .fan .sweep{stroke:var(--accent);stroke-width:1.4;fill:rgba(53,198,216,.08);transform-origin:40px 320px;animation:sweep 4.5s linear infinite;}
+@keyframes sweep{to{transform:rotate(360deg);}}
+.sonar .fan .center{fill:var(--accent);}
+.sonar .aux{display:flex;gap:34px;margin-top:26px;font-family:var(--mono);font-size:14px;color:var(--ink-2);}
+.sonar .aux b{display:block;color:var(--ink-0);font-size:24px;font-weight:600;font-family:var(--display);letter-spacing:-.01em;margin-top:2px;}
+/* ============ 第6页 控制 ============ */
+.ctrl{height:920px;background:var(--paper-2);color:var(--ink-on-paper);display:flex;align-items:center;overflow:hidden;}
+.ctrl .sec-in{display:flex;flex-direction:column;align-items:center;text-align:center;padding-top:70px;padding-bottom:70px;}
+.ctrl .txt{max-width:720px;}
+.ctrl-stage{position:relative;width:min(880px,100%);height:440px;margin-top:26px;}
+.ctrl-stage .axes{position:absolute;inset:0;width:100%;height:100%;}
+.ctrl-stage .robot{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:250px;height:320px;border-radius:16px;overflow:hidden;background:var(--surface-dark);box-shadow:0 30px 60px -20px rgba(6,16,26,.55);z-index:3;}
+.ctrl-stage .robot img{width:100%;height:100%;object-fit:cover;}
+.abilities{display:flex;gap:26px;justify-content:center;margin-top:16px;flex-wrap:wrap;}
+.ab{border:1px solid var(--line);background:#fff;border-radius:12px;padding:18px 34px;min-width:132px;box-shadow:0 6px 20px -8px rgba(14,26,36,.14);}
+.ab b{font-size:24px;display:block;font-weight:700;letter-spacing:.02em;}
+.ab span{font-family:var(--mono);font-size:11px;color:var(--ink-2-on-paper);display:block;margin-top:6px;letter-spacing:.08em;}
+.modes{display:flex;gap:12px;justify-content:center;margin-top:24px;}
+.mode{border:1px solid var(--line);border-radius:999px;padding:8px 24px;font-size:14.5px;color:var(--ink-2-on-paper);background:#fff;transition:.2s var(--ease);}
+.mode.active{background:var(--accent);color:#03121a;border-color:var(--accent);font-weight:600;}
+/* ============ 第7页 三维 ============ */
+.d3{height:920px;background:
+radial-gradient(90% 70% at 70% 40%,rgba(53,198,216,.12) 0%,transparent 55%),
+linear-gradient(180deg,var(--bg-1),var(--bg-0));display:flex;align-items:center;}
+.d3 .sec-in{display:flex;align-items:center;gap:56px;padding-top:80px;padding-bottom:80px;}
+.d3 .left{flex:0 0 46%;}
+.d3 .right{flex:1;position:relative;height:560px;}
+.d3 .right .space{position:absolute;inset:0;border-radius:18px;overflow:hidden;background:var(--surface-dark);box-shadow:inset 0 0 0 1px rgba(138,151,163,.16);}
+.d3 .right .space img{width:100%;height:100%;object-fit:cover;}
+.d3 .right .grid{position:absolute;inset:0;background:
+linear-gradient(rgba(53,198,216,.14) 1px,transparent 1px),
+linear-gradient(90deg,rgba(53,198,216,.14) 1px,transparent 1px);
+background-size:44px 44px;mask-image:radial-gradient(80% 80% at 50% 50%,#000 20%,transparent 88%);-webkit-mask-image:radial-gradient(80% 80% at 50% 50%,#000 20%,transparent 88%);}
+.d3 .num{font-family:var(--display);font-size:clamp(80px,9vw,128px);line-height:.9;font-weight:700;letter-spacing:-.02em;margin-top:28px;}
+.d3 .num .unit{font-size:.34em;font-weight:500;color:var(--accent);margin-left:10px;}
+.d3 .num-label{font-family:var(--mono);font-size:13px;letter-spacing:.12em;color:var(--ink-2);margin-top:12px;text-transform:uppercase;}
+.d3 .aux{font-family:var(--mono);font-size:14px;color:var(--ink-2);margin-top:16px;}
+.d3 .aux b{color:var(--ink-0);font-size:20px;font-weight:600;font-family:var(--display);}
+.state-tags{display:flex;gap:9px;flex-wrap:wrap;margin-top:24px;}
+.state-tags .st{border:1px solid var(--line);border-radius:8px;padding:7px 16px;font-size:13.5px;color:var(--ink-1);background:rgba(13,34,56,.4);}
+.state-tags .st b{color:var(--accent);font-weight:600;margin-right:5px;}
+/* ============ 第8页 场景 ============ */
+.scenes{height:1080px;background:var(--bg-0);display:flex;align-items:center;padding:40px 0;}
+.scenes .sec-in{text-align:center;}
+.scenes .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:1184px;margin:40px auto 0;}
+.card{position:relative;border-radius:14px;overflow:hidden;text-align:left;aspect-ratio:580/370;background:var(--surface-dark);transition:transform .35s var(--ease),box-shadow .35s var(--ease);}
+.card .thumb{position:absolute;inset:0;}
+.card .thumb img{width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease);}
+.card:hover{transform:scale(1.03);box-shadow:0 24px 50px -24px rgba(0,0,0,.7);}
+.card:hover .thumb img{transform:scale(1.06);}
+.card .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,8,15,0) 30%,rgba(4,8,15,.82) 100%);}
+.card .body{position:absolute;left:0;right:0;bottom:0;padding:26px 28px;}
+.card h3{font-size:25px;font-weight:700;letter-spacing:.01em;}
+.card p{font-size:15px;color:var(--ink-1);margin-top:8px;line-height:1.55;}
+/* ============ 第9页 参数 ============ */
+.spec{height:740px;background:var(--paper);color:var(--ink-on-paper);display:flex;align-items:center;padding:56px 0;}
+.spec .sec-in{display:flex;flex-direction:column;}
+.spec-head{display:flex;flex-direction:column;gap:10px;margin-bottom:36px;}
+.spec-head .h-title{font-size:28px;line-height:1.2;white-space:nowrap;}
+.spec-body{display:flex;gap:72px;align-items:stretch;}
+.spec .product-ph{flex:0 0 460px;border-radius:16px;overflow:hidden;background:var(--surface-dark);box-shadow:0 24px 50px -26px rgba(14,26,36,.4);}
+.spec .product-ph img{width:100%;height:100%;object-fit:cover;display:block;}
+.spec .right-col{flex:1;display:flex;flex-direction:column;}
+.spec-list{display:grid;grid-template-columns:1fr 1fr;gap:0 48px;}
+.spec-item{display:flex;align-items:baseline;gap:16px;padding:19px 2px;border-bottom:1px solid #dbe2e8;}
+.spec-item .cat{font-family:var(--mono);font-size:11px;color:#94a1ac;flex:0 0 44px;text-align:left;white-space:nowrap;}
+.spec-item .name{font-size:15px;color:var(--ink-2-on-paper);flex:0 0 150px;text-align:left;white-space:nowrap;}
+.spec-item .val{font-size:16px;font-weight:600;flex:1;text-align:left;white-space:nowrap;}
+.spec .more{margin-top:auto;padding-top:24px;align-self:flex-start;display:inline-flex;align-items:center;gap:8px;font-size:14px;color:#0b7f92;text-decoration:none;border-bottom:1px solid #0b7f92;padding-bottom:2px;white-space:nowrap;}
+/* ============ 第11页 结尾 ============ */
+.end{height:900px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:var(--bg-0);}
+.end .bg-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55;}
+.end .veil{position:absolute;inset:0;background:radial-gradient(90% 80% at 50% 60%,rgba(4,8,15,0) 0%,rgba(4,8,15,.9) 78%);}
+.end .inner{position:relative;z-index:2;padding:120px 24px;}
+.end .end-name{font-size:24px;font-weight:700;}
+.end h2{font-family:var(--display);font-size:clamp(40px,5vw,70px);line-height:1.1;font-weight:700;margin-top:20px;}
+.end .end-sub{font-size:18px;color:var(--ink-1);margin-top:20px;letter-spacing:.32em;}
+.btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:40px;}
+.btn{display:inline-block;font-size:16px;padding:15px 38px;border-radius:999px;text-decoration:none;letter-spacing:.02em;transition:.22s var(--ease);}
+.btn.primary{background:var(--accent);color:#03121a;font-weight:600;}
+.btn.primary:hover{background:var(--accent-soft);box-shadow:0 8px 26px var(--cyan-glow);transform:translateY(-1px);}
+.btn.ghost{color:var(--ink-0);border:1px solid var(--line);}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent);}
+.end .copyright{margin-top:44px;font-family:var(--mono);font-size:11px;color:var(--titanium);letter-spacing:.1em;}
+/* ============ 响应式 ============ */
+@media (max-width:1439px){
+.hero{height:auto;min-height:100vh;}
+.pos,.vision,.sonar,.ctrl,.d3,.scenes,.spec,.end{height:auto;min-height:auto;}
+.vision{min-height:620px;}
+.spec .product-ph{flex:0 0 400px;}
+.spec-body{gap:48px;}
+.spec-list{gap:0 32px;}
+.spec-item .val{font-size:14px;}
+.spec-item .cat,.spec-item .name,.spec-item .val{white-space:normal;}
+}
+@media (max-width:1024px){
+.sec-in{padding-left:40px;padding-right:40px;}
+.sonar .sec-in{gap:36px;}
+.sonar .left{flex:0 0 260px;}
+.sonar .robot{width:260px;height:360px;}
+.d3 .sec-in{gap:36px;}
+.d3 .right{height:440px;}
+.spec-body{gap:40px;}
+}
+@media (max-width:860px){
+.nav{padding:0 20px;flex-wrap:wrap;}
+.nav .links{display:none;}
+.nav .menu-btn{display:flex;align-items:center;justify-content:center;}
+.nav .mobile-links{display:none;flex-direction:column;gap:2px;width:100%;padding:10px 0 16px;}
+.nav .mobile-links a{color:var(--ink-1);text-decoration:none;font-size:15px;padding:11px 4px;border-bottom:1px solid var(--line-soft);letter-spacing:.04em;}
+.nav .mobile-links a:hover{color:var(--accent);}
+.nav.open .mobile-links{display:flex;}
+.sec-in{padding-left:22px;padding-right:22px;}
+.sonar .sec-in{flex-direction:column;align-items:stretch;}
+.sonar .left{flex:0 0 auto;}
+.sonar .robot{width:100%;height:280px;}
+.d3 .sec-in{flex-direction:column;}
+.d3 .right{height:380px;width:100%;}
+.scenes .grid{grid-template-columns:1fr;}
+.spec-body{flex-direction:column;align-items:stretch;}
+.spec .product-ph{flex:0 0 300px;width:100%;}
+.spec-list{grid-template-columns:1fr;}
+.spec-item .name{flex:0 0 120px;}
+.spec-head .h-title{white-space:normal;}
+.ctrl-stage{height:360px;}
+.vision .grid{flex-direction:column;align-items:flex-start;}
+}
+@media (max-width:560px){
+.hero .hero-name{font-size:20px;}
+.hero .hero-top{padding-top:96px;}
+.hero .hero-bottom h1{font-size:24px;}
+.hero .hero-bottom{padding-bottom:96px;}
+.hero .hero-ghost{font-size:42px;}
+.hero .hero-product{width:96vw;margin-top:-6px;}
+.spec-item{flex-wrap:wrap;gap:8px 12px;}
+.spec-item .name{flex:0 0 104px;}
+}
+</style>
+</head>
+<body>
+<nav class="nav" id="nav" data-od-id="site-nav">
+  <a class="brand" href="#top" data-od-id="nav-brand">
+    <span class="cn">深巡 X1</span><span class="en">DeepScout X1</span>
+  </a>
+  <div class="links">
+    <a href="#overview">概览</a>
+    <a href="#vision">能力</a>
+    <a href="#scenes">场景</a>
+    <a href="#spec">参数</a>
+  </div>
+  <a class="cta" href="#spec">了解详情</a>
+  <button class="menu-btn" aria-label="菜单" id="menu-btn">☰</button>
+  <div class="mobile-links">
+    <a href="#overview">概览</a>
+    <a href="#vision">能力</a>
+    <a href="#scenes">场景</a>
+    <a href="#spec">参数</a>
+  </div>
+</nav>
+<main id="top">
+  <!-- 第1页 首屏 -->
+<section class="hero" id="hero" data-od-id="page-hero">
+    <div class="hero-bg"></div>
+    <div class="hero-ghost" aria-hidden="true">DeepScout&nbsp;X1</div>
+    <div class="hero-top">
+      <div class="hero-name reveal in">深巡 X1<span class="en">DeepScout X1</span></div>
+    </div>
+    <div class="hero-product" id="hero-product">
+      <div class="stage" id="hero-stage">
+        <img src="assets/img/hero-product.png" alt="深巡 X1 水下巡检机器人">
+      </div>
+    </div>
+    <div class="hero-bottom">
+      <h1 data-od-id="hero-title">深入未知。<br><span class="glow">看见水下每一处细节。</span></h1>
+      <p class="hero-sub">智能水下巡检机器人</p>
+    </div>
+    <div class="scroll-hint"><span class="line"></span><span>向下探索</span></div>
+  </section>
+  <!-- 第2页 定位 -->
+<section class="pos" id="overview" data-od-id="page-positioning">
+    <div class="sec-in">
+      <div class="txt">
+        <p class="kicker reveal">智能水下巡检</p>
+        <h2 class="h-title reveal" data-d="1" data-od-id="pos-title">为复杂水下环境而生。</h2>
+        <p class="lead reveal" data-d="2" data-od-id="pos-lead">集高清成像、声呐探测、三维定位与稳定控制于一体，让水下巡检变得更清晰、更安全、更高效。</p>
+      </div>
+      <div class="silhouette reveal" data-d="3">
+        <img src="assets/img/overview.png" alt="深巡 X1 产品整体轮廓">
+      </div>
+      <div class="pills reveal" data-d="3">
+        <span class="pill"><b>·</b>看得清</span>
+        <span class="pill"><b>·</b>测得准</span>
+        <span class="pill"><b>·</b>控得稳</span>
+      </div>
+    </div>
+  </section>
+  <!-- 第3页 水下视觉 -->
+<section class="vision" id="vision" data-od-id="page-vision">
+    <img class="bg-img" src="assets/img/vision.png" alt="水下低照度环境中的目标">
+    <div class="veil"></div>
+    <div class="beam"></div>
+    <div class="sec-in">
+      <div class="grid">
+        <div class="txt-col">
+          <p class="kicker reveal">水下视觉</p>
+          <h2 class="h-title reveal" data-d="1" data-od-id="vision-title">黑暗之下，依然清晰。</h2>
+          <p class="lead reveal" data-d="2" data-od-id="vision-lead">高清前视成像与水下照明协同工作，在低照度环境中捕捉结构、裂缝、腐蚀和附着物细节。</p>
+          <div class="core reveal" data-d="3">
+            <div class="num">1080P<span>实时影像</span></div>
+          </div>
+          <div class="tags reveal" data-d="3">
+            <span class="tag">实时回传</span>
+            <span class="tag">水下照明</span>
+            <span class="tag">作业录像</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- 第5页 声呐 -->
+<section class="sonar" data-od-id="page-sonar">
+    <div class="sec-in">
+      <div class="left reveal">
+        <div class="robot"><img src="assets/img/sonar.png" alt="深巡 X1 前视声呐扫描"></div>
+      </div>
+      <div class="right">
+        <p class="kicker reveal">声呐感知</p>
+        <h2 class="h-title reveal" data-d="1" data-od-id="sonar-title">看不见，也能感知。</h2>
+        <p class="lead reveal" data-d="2" data-od-id="sonar-lead">前视声呐持续扫描机器人前方环境，辅助识别障碍物、目标距离与水下结构。</p>
+        <div class="num reveal" data-d="3">50<span class="unit">m</span></div>
+        <div class="num-label reveal" data-d="3">声呐探测量程</div>
+        <div class="fan reveal" data-d="3">
+          <svg viewBox="0 0 720 360" preserveAspectRatio="xMidYMid meet">
+            <path class="arc" d="M40 320 A 340 340 0 0 1 720 320 Z"/>
+            <path class="ring" d="M40 320 A 340 340 0 0 1 720 320"/>
+            <path class="ring" d="M40 320 A 240 240 0 0 1 520 320"/>
+            <path class="ring" d="M40 320 A 140 140 0 0 1 320 320"/>
+            <path class="ring" d="M40 320 A 44 44 0 0 1 128 320"/>
+            <line x1="40" y1="320" x2="720" y2="320" stroke="rgba(53,198,216,.3)" stroke-width="1"/>
+            <path class="sweep" d="M40 320 L 380 20 A 380 380 0 0 0 40 320 Z"/>
+            <circle class="center" cx="40" cy="320" r="5"/>
+          </svg>
+        </div>
+        <div class="aux reveal" data-d="3">
+          <span>扫描范围<b>±60°</b></span>
+          <span>探测方向<b>前视</b></span>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- 第6页 控制 -->
+<section class="ctrl" data-od-id="page-control">
+    <div class="sec-in">
+      <div class="txt">
+        <p class="kicker on-paper reveal">稳定控制</p>
+        <h2 class="h-title reveal" data-d="1" data-od-id="ctrl-title">水流之中，精准保持姿态。</h2>
+        <p class="lead on-paper reveal" data-d="2" data-od-id="ctrl-lead">融合航向、俯仰、横滚、深度与速度信息，支持精细移动和稳定巡检。</p>
+      </div>
+      <div class="ctrl-stage reveal" data-d="2">
+        <svg class="axes" viewBox="0 0 880 440" fill="none" preserveAspectRatio="none">
+          <line x1="20" y1="220" x2="860" y2="220" stroke="#c3cdd6" stroke-width="1.2" stroke-dasharray="5 7"/>
+          <line x1="440" y1="20" x2="440" y2="420" stroke="#c3cdd6" stroke-width="1.2" stroke-dasharray="5 7"/>
+          <circle cx="440" cy="220" r="170" stroke="#c3cdd6" stroke-width="1.2" stroke-dasharray="5 7"/>
+          <circle cx="440" cy="220" r="120" stroke="#d5dde4" stroke-width="1"/>
+          <path d="M300 290 L345 265" stroke="#0b7f92" stroke-width="2.2"/>
+          <path d="M580 150 L625 125" stroke="#0b7f92" stroke-width="2.2"/>
+        </svg>
+        <div class="robot"><img src="assets/img/control.png" alt="深巡 X1 稳定悬停"></div>
+      </div>
+      <div class="abilities reveal" data-d="3">
+        <div class="ab"><b>定深</b><span>深度保持</span></div>
+        <div class="ab"><b>定向</b><span>航向保持</span></div>
+        <div class="ab"><b>悬停</b><span>位置保持</span></div>
+      </div>
+      <div class="modes reveal" data-d="3">
+        <span class="mode active">手动</span>
+        <span class="mode">自动</span>
+        <span class="mode">锁定</span>
+      </div>
+    </div>
+  </section>
+  <!-- 第7页 三维 -->
+<section class="d3" data-od-id="page-3d">
+    <div class="sec-in">
+      <div class="left">
+        <p class="kicker reveal">三维感知</p>
+        <h2 class="h-title reveal" data-d="1" data-od-id="d3-title">不只是位置，<br>更是完整的水下状态。</h2>
+        <p class="lead reveal" data-d="2" data-od-id="d3-lead">实时融合深度、航向、姿态与位置数据，帮助操作人员理解机器人与周边目标的空间关系。</p>
+        <div class="num reveal" data-d="3">10<span class="unit">Hz</span></div>
+        <div class="num-label reveal" data-d="3">三维定位更新</div>
+        <div class="aux reveal" data-d="3">姿态数据更新 <b>50 Hz</b></div>
+        <div class="state-tags reveal" data-d="3">
+          <span class="st"><b>位置</b></span>
+          <span class="st"><b>深度</b></span>
+          <span class="st"><b>航向</b></span>
+          <span class="st"><b>俯仰</b></span>
+          <span class="st"><b>横滚</b></span>
+        </div>
+      </div>
+      <div class="right reveal" data-d="2">
+        <div class="space"><img src="assets/img/d3.png" alt="深巡 X1 三维坐标空间"></div>
+        <div class="grid"></div>
+      </div>
+    </div>
+  </section>
+  <!-- 第8页 场景 -->
+<section class="scenes" id="scenes" data-od-id="page-scenes">
+    <div class="sec-in">
+      <div class="txt" style="max-width:720px;margin:0 auto;">
+        <p class="kicker reveal">应用场景</p>
+        <h2 class="h-title reveal" data-d="1" data-od-id="scenes-title">深入每一个需要被看见的地方。</h2>
+      </div>
+      <div class="grid" data-od-id="scene-grid">
+        <div class="card reveal" data-od-id="scene-card-pipeline">
+          <div class="thumb"><img src="assets/img/scene-1.png" alt="水下管道巡检"></div>
+          <div class="shade"></div>
+          <div class="body"><h3>水下管道巡检</h3><p>识别法兰、接口、腐蚀与附着物状态。</p></div>
+        </div>
+        <div class="card reveal" data-d="1" data-od-id="scene-card-dam">
+          <div class="thumb"><img src="assets/img/sonar.png" alt="水坝结构检测"></div>
+          <div class="shade"></div>
+          <div class="body"><h3>水坝结构检测</h3><p>检查坝体裂缝、渗漏及表面异常。</p></div>
+        </div>
+        <div class="card reveal" data-d="2" data-od-id="scene-card-bridge">
+          <div class="thumb"><img src="assets/img/vision.png" alt="桥墩水下检测"></div>
+          <div class="shade"></div>
+          <div class="body"><h3>桥墩水下检测</h3><p>观察冲刷、腐蚀及水下结构完整性。</p></div>
+        </div>
+        <div class="card reveal" data-d="3" data-od-id="scene-card-search">
+          <div class="thumb"><img src="assets/img/d3.png" alt="水底目标搜索"></div>
+          <div class="shade"></div>
+          <div class="body"><h3>水底目标搜索</h3><p>结合视频与声呐定位低能见度水域中的目标。</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- 第9页 参数 -->
+<section class="spec" id="spec" data-od-id="page-spec">
+    <div class="sec-in">
+      <div class="spec-head">
+        <p class="kicker on-paper reveal">技术规格</p>
+        <h2 class="h-title reveal" data-d="1" data-od-id="spec-title">每一项性能，都服务于可靠作业。</h2>
+      </div>
+      <div class="spec-body">
+        <div class="product-ph reveal" data-d="2"><img src="assets/img/scene-2.png" alt="深巡 X1 产品参考图"></div>
+        <div class="right-col">
+          <div class="spec-list reveal" data-d="2" data-od-id="spec-list">
+            <div class="spec-item"><span class="cat">产品</span><span class="name">产品型号</span><span class="val">深巡 X1 / DS-X1</span></div>
+            <div class="spec-item"><span class="cat">影像</span><span class="name">视频规格</span><span class="val">1080P</span></div>
+            <div class="spec-item"><span class="cat">声呐</span><span class="name">探测量程</span><span class="val">50 m</span></div>
+            <div class="spec-item"><span class="cat">声呐</span><span class="name">扫描范围</span><span class="val">±60°</span></div>
+            <div class="spec-item"><span class="cat">定位</span><span class="name">三维定位更新率</span><span class="val">10 Hz</span></div>
+            <div class="spec-item"><span class="cat">姿态</span><span class="name">姿态数据更新率</span><span class="val">50 Hz</span></div>
+            <div class="spec-item"><span class="cat">控制</span><span class="name">支持模式</span><span class="val">手动 / 自动 / 锁定</span></div>
+            <div class="spec-item"><span class="cat">数据</span><span class="name">实时监测</span><span class="val">视频 · 声呐 · 位置 · 姿态 · 参数 · 告警</span></div>
+            <div class="spec-item"><span class="cat">记录</span><span class="name">任务数据</span><span class="val">视频录像 · 运行日志 · 异常记录</span></div>
+          </div>
+          <a class="more reveal" data-d="3" href="#" data-od-id="spec-more">查看完整规格 <span>↓</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- 第11页 结尾 -->
+<section class="end" data-od-id="page-end">
+    <img class="bg-img" src="assets/img/hero.png" alt="深巡 X1">
+    <div class="veil"></div>
+    <div class="inner">
+      <div class="end-name reveal">深巡 X1</div>
+      <h2 data-od-id="end-title">深入水下。<br>让未知清晰可见。</h2>
+      <p class="end-sub">智能水下巡检机器人</p>
+      <div class="btns">
+        <a class="btn primary" href="#top" data-od-id="btn-explore">再次探索</a>
+        <a class="btn ghost" href="#spec" data-od-id="btn-spec">查看技术规格</a>
+      </div>
+      <div class="copyright">© 深巡 X1 · DeepScout X1</div>
+    </div>
+  </section>
+</main>
+<script>
+  (function(){
+    var renderMode = new URLSearchParams(window.location.search).has('render');
+    if(renderMode){ document.documentElement.classList.add('rendering'); }
+    var nav = document.getElementById('nav');
+    var menuBtn = document.getElementById('menu-btn');
+    menuBtn.addEventListener('click', function(){
+      nav.classList.toggle('open');
+      menuBtn.textContent = nav.classList.contains('open') ? '✕' : '☰';
+    });
+    function onScroll(){
+      if(window.scrollY > 40){ nav.classList.add('scrolled'); }
+      else{ nav.classList.remove('scrolled'); }
+    }
+    window.addEventListener('scroll', onScroll, {passive:true});
+    onScroll();
+
+    var revealEls = document.querySelectorAll('.reveal');
+    if(renderMode){
+      revealEls.forEach(function(el){ el.classList.add('in'); });
+    } else if('IntersectionObserver' in window){
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+          if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+        });
+      }, {threshold:0.12, rootMargin:'0px 0px -6% 0px'});
+      revealEls.forEach(function(el){ io.observe(el); });
+    } else {
+      revealEls.forEach(function(el){ el.classList.add('in'); });
+    }
+
+    // ===== 首屏 三维倾斜 + 惯性跟随 =====
+    (function(){
+      var hero = document.getElementById('hero');
+      var stage = document.getElementById('hero-stage');
+      if(!hero || !stage) return;
+
+      var maxY = 20;   // 绕 Y 轴 ±20°
+      var maxX = 8;    // 绕 X 轴 ±8°
+      var targetX = 0, targetY = 0;
+      var curX = 0, curY = 0;
+      var lerp = 0.08; // 惯性缓动系数
+      var rafId = null;
+
+      function loop(){
+        curX += (targetX - curX) * lerp;
+        curY += (targetY - curY) * lerp;
+        stage.style.transform = 'rotateX(' + curX.toFixed(3) + 'deg) rotateY(' + curY.toFixed(3) + 'deg)';
+        if(Math.abs(targetX - curX) < 0.01 && Math.abs(targetY - curY) < 0.01){
+          curX = targetX; curY = targetY;
+          stage.style.transform = 'rotateX(' + targetX + 'deg) rotateY(' + targetY + 'deg)';
+          rafId = null;
+          return;
+        }
+        rafId = requestAnimationFrame(loop);
+      }
+      function kick(){ if(!rafId){ rafId = requestAnimationFrame(loop); } }
+
+      hero.addEventListener('mousemove', function(e){
+        var r = hero.getBoundingClientRect();
+        var nx = (e.clientX - r.left) / r.width;   // 0..1
+        var ny = (e.clientY - r.top) / r.height;   // 0..1
+        targetY = (nx - 0.5) * 2 * maxY;           // 左右 → 绕 Y
+        targetX = -(ny - 0.5) * 2 * maxX;          // 上下 → 绕 X（俯仰）
+        kick();
+      });
+
+      hero.addEventListener('mouseleave', function(){
+        targetX = 0; targetY = 0;
+        kick();
+      });
+    })();
+  })();
+</script>
+</body>
+</html>
